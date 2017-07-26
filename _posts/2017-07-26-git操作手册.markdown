@@ -1,0 +1,284 @@
+---
+layout: post
+title:  "git常用操作"
+date:   2017-07-26
+author: CDD
+category: ios
+tags: [jekyll, github]
+---
+
+# git常用操作
+
+##### Git 全局设置
+
+```
+git config --global user.name "masonglin"
+git config --global user.email "masonglin@whome.cn"
+```
+
+##### 创建新版本库
+
+```
+git clone git@git.whome.cn/yunwei/test.git
+cd test
+touch README.md
+git add README.md
+git commit -m "add README"
+git push -u origin master
+```
+
+##### 已存在的文件夹
+
+```
+cd test
+git init
+git remote add origin git@git.whome.cn/yunwei/test.git
+git add .
+git commit
+git push -u origin master
+```
+
+
+
+### git添加文件
+
+当前目录所有文件添加到暂存区
+
+```
+git add .   #提交新文件(new)和被修改(modified)文件，不包括被删除(deleted)文件
+git add -u  #提交被修改(modified)和被删除(deleted)文件，不包括新文件(new)
+git add -A  #是上面两个功能的合集（git add --all的缩写)
+```
+
+
+
+### git版本回退
+
+回退到上一个版本
+
+```
+git reset --hard HEAD^
+```
+
+回退到指定版本
+
+```
+git log --pretty=oneline  #查看commit id
+git reset --hard commit_id
+```
+
+注意：若git log中看不到想要回退的提交记录，可以使用`git reflog`命令查看命令记录。
+
+撤销修改
+
+```
+git checkout -- file
+```
+
+注意：1、若file修改后没有放到暂存区，执行撤销修改就回到和版本库一样的状态
+
+​	    2、若已添加到暂存区后，又做了修改，执行撤销就回到添加暂存区后的状态
+
+把暂存区的修改撤销，重新放回工作区
+
+```
+git reset HEAD file
+```
+
+删除文件
+
+```
+git rm file
+```
+
+
+
+### git分支管理
+
+显示所有分支
+
+```
+git branch
+```
+
+从当前分支创建一个叫yunwei的分支
+
+```
+git branch yunwei
+```
+
+切换到yunwei分支
+
+```
+git checkout yunwei
+```
+
+相当于以上两条命令的组合
+
+```
+git checkout -b yunwei
+```
+
+把yunwei分支的代码合并到master上
+
+```
+git checkout master
+git merge (--no-ff) yunwei   #--no-ff 不使用fast forward模式，fast forward删除分枝后，会丢掉分枝信息
+```
+
+删除yunwei分支，不能在被删除分支上执行
+
+```
+git branch -d yunwei
+```
+
+更新yunwei分支，与本地的master分支合并
+
+```
+git pull origin yunwei:master
+```
+
+远程分支与当前分支合并
+
+```
+git pull origin yunwei
+```
+
+查看合并分支图
+
+```
+git log --graph --pretty=oneline --abbrev-commit
+```
+
+保存当前工作
+
+```
+git stash
+```
+
+查看保存的工作
+
+```
+git stash list
+```
+
+恢复保存的工作
+
+```
+git stash apply  #恢复后stash内容不删除
+git stash drop   #恢复后同事删除stash内容
+```
+
+删除一个没有被合并过的分支
+
+```
+git branch -D name
+```
+
+
+
+### Git标签管理
+
+查看所有标签
+
+```
+git tag
+```
+
+从当前分支创建一个名为v1.0的标签
+
+```
+git tag v1.0
+```
+
+删除名为v1.0的标签
+
+```
+git tag -d v1.0
+```
+
+已提交版本打标签
+
+```
+git log --pretty=oneline --abbrev-commit
+git tag v1.01 commit_id
+```
+
+查看标签信息
+
+```
+git show v1.0
+```
+
+创建带有说明的标签，'-a'指定标签明，'-m'指定说明
+
+```
+git tag -a v1.0 -m "hahhahahha" commit_id
+```
+
+推送一个标签到远程
+
+```
+git push origin v1.0
+```
+
+推送所有标签到远程
+
+```
+git push origin --tags
+```
+
+删除远程标签
+
+```
+git tag -d v1.0  #先从本地删除
+git push origin :refs/tag/v1.0 #再从远程删除
+```
+
+
+
+# 辅助分支
+
+### 特性分支
+
+从develop分支创建，用于特性开发，完成后要合并回develop分支。 
+操作过程：
+
+```
+git checkout -b newfeature develop     #从develop分支创建newfeature特性分支 
+git checkout develop 				   #开发完成后，需要合并回develop分支，先切换到develop分支 
+git merge --no-ff newfeature           #合并回develop分支
+git branch -d newfeature               #删除特性分支 
+git push origin develop                #把合并后的develop分支推送到远程仓库
+```
+
+### 发布分支
+
+从develop分支创建，用于预发布版本，允许小bug修复，完成后要合并回develop和master。 
+操作过程：
+
+```
+git checkout -b release-1.2 develop    #从develop分支创建一个发布分支 
+git checkout master                    #切换到master分支，准备合并 
+git merge --no-ff release-1.2          #把release-1.2分支合并到master分支 
+git tag 1.2                            #从master分支打一个标签 
+git checkout develop                   #切换到develop分支，准备合并 
+git merge --no-ff release-1.2          #把release-1.2分支合并到develop分支 
+git branch -d release-1.2              #删除这个发布分支
+```
+
+### 修复分支
+
+从master分支创建，用于生产环境上的Bug修复，完成后要合并回develop和master。 
+操作过程：
+
+```
+git checkout -b hotfix-1.2.1 master    #从master分支创建一个Bug修复分支 
+git checkout master                    #切换到master分支，准备合并 
+git merge --no-ff hotfix-1.2.1         #合并到master分支 
+git tag 1.2.1                          #为master分支创建一个标签 
+git checkout develop                   #切换到develop分支，准备合并 
+git merge --no-ff hotfix-1.2.1         #合并到develop分支 
+git branch -d hotfix-1.2.1             #删除hotfix-1.2.1分支 
+```
+
